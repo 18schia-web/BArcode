@@ -8,62 +8,39 @@
       margin: 0;
       font-family: Arial, sans-serif;
       background: linear-gradient(135deg, #fbc2eb, #a6c1ee);
-      color: #111;
       text-align: center;
+      color: #111;
     }
 
     h1 {
       margin-top: 20px;
-      font-size: 2.5em;
+      font-size: 2.2em;
       color: #fff;
       text-shadow: 2px 2px #ff6f61;
     }
 
     .description {
-      font-size: 1.2em;
-      margin-bottom: 20px;
+      font-size: 1.1em;
       color: #fff;
+      margin-bottom: 10px;
       text-shadow: 1px 1px #444;
     }
 
-    .container {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      flex-wrap: wrap;
-      margin: 20px;
-    }
-
-    .scanner-box, .history-box {
-      border-radius: 15px;
-      padding: 15px;
-      background-color: rgba(255,255,255,0.9);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    }
-
-    .scanner-box {
-      flex: 1 1 320px;
-      max-width: 400px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .history-box {
-      flex: 1 1 300px;
-      max-width: 350px;
-      height: 400px;
-      overflow-y: auto;
+    .scanner-wrapper {
+      position: relative;
+      display: inline-block;
+      width: 90%;
+      max-width: 480px;
+      margin-top: 20px;
+      border-radius: 10px;
+      overflow: hidden;
     }
 
     #scanner-container {
       width: 100%;
       padding-top: 75%; /* 4:3 aspect ratio */
       position: relative;
-      border: 4px solid #ff6f61;
-      border-radius: 10px;
       background-color: #000;
-      overflow: hidden;
     }
 
     #scanner-container video,
@@ -75,27 +52,47 @@
       height: 100% !important;
     }
 
+    /* Red rectangle overlay */
+    .overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 70%;
+      height: 30%;
+      transform: translate(-50%, -50%);
+      border: 3px solid red;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+
     #result {
       margin-top: 15px;
       font-size: 1.2em;
-      color: #ff6f61;
       font-weight: bold;
+      color: #111;
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: inline-block;
+      min-width: 250px;
+      background-color: rgba(255,255,255,0.8);
+      transition: background-color 0.3s ease;
     }
 
     #history-list {
+      margin-top: 20px;
       list-style: none;
       padding: 0;
-      margin: 0;
-      font-size: 1.1em;
-      color: #333;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     #history-list li {
       background: #ffe5ec;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       padding: 8px 12px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 6px;
+      font-weight: bold;
     }
 
     button {
@@ -111,90 +108,83 @@
       transition: 0.2s;
     }
 
-    button:hover {
-      background-color: #ff4a3c;
-    }
-
-    @media (max-width: 800px) {
-      .container {
-        flex-direction: column;
-        align-items: center;
-      }
-      .scanner-box, .history-box {
-        max-width: 90%;
-      }
-      .history-box { height: 300px; }
-    }
+    button:hover { background-color: #ff4a3c; }
   </style>
 </head>
 <body>
-  <h1>Prom Barcode Scanner</h1>
-  <p class="description">Scan barcodes and see all scanned data!</p>
 
-  <div class="container">
-    <!-- Scanner Column -->
-    <div class="scanner-box">
-      <div id="scanner-container"></div>
-      <div id="result">Scanned data will appear here</div>
-      <div>
-        <button id="start">Start Scanner</button>
-        <button id="stop">Stop Scanner</button>
-      </div>
-    </div>
+<h1>Prom Barcode Scanner</h1>
+<p class="description">Place the barcode inside the red rectangle</p>
 
-    <!-- History Column -->
-    <div class="history-box">
-      <h2>Past Scans</h2>
-      <ul id="history-list"></ul>
-    </div>
-  </div>
+<div class="scanner-wrapper">
+  <div id="scanner-container"></div>
+  <div class="overlay"></div>
+</div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-  <script>
-    const startBtn = document.getElementById('start');
-    const stopBtn = document.getElementById('stop');
-    const resultContainer = document.getElementById('result');
-    const historyList = document.getElementById('history-list');
-    let scannedHistory = [];
+<div id="result">Scanned data will appear here</div>
+<button id="start">Start Scanner</button>
+<button id="stop">Stop Scanner</button>
 
-    function startScanner() {
-      Quagga.init({
-        inputStream: {
-          type: "LiveStream",
-          target: document.querySelector('#scanner-container'),
-          constraints: { facingMode: "environment" },
-        },
-        decoder: { readers: ["code_128_reader"] },
-        locate: true
-      }, function(err) {
-        if (err) {
-          console.error(err);
-          alert("Camera error. Make sure permissions are allowed.");
-          return;
-        }
-        Quagga.start();
-        resultContainer.textContent = "Scanning...";
-      });
+<ul id="history-list"></ul>
 
-      Quagga.onDetected(function(data){
-        const code = data.codeResult.code;
-        resultContainer.textContent = `Scanned: ${code}`;
-        if (!scannedHistory.includes(code)) {
-          scannedHistory.push(code);
-          const li = document.createElement('li');
-          li.textContent = code;
-          historyList.prepend(li);
-        }
-      });
-    }
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<script>
+  const resultEl = document.getElementById('result');
+  const historyList = document.getElementById('history-list');
+  const startBtn = document.getElementById('start');
+  const stopBtn = document.getElementById('stop');
 
-    function stopScanner() {
-      Quagga.stop();
-      resultContainer.textContent = "Scanner stopped.";
-    }
+  let scannedHistory = [];
 
-    startBtn.addEventListener('click', startScanner);
-    stopBtn.addEventListener('click', stopScanner);
-  </script>
+  function flashResult() {
+    resultEl.style.backgroundColor = '#4caf50'; // green flash
+    setTimeout(() => {
+      resultEl.style.backgroundColor = 'rgba(255,255,255,0.8)';
+    }, 400);
+  }
+
+  function startScanner() {
+    Quagga.init({
+      inputStream: {
+        type: "LiveStream",
+        target: document.querySelector('#scanner-container'),
+        constraints: { facingMode: "environment" },
+      },
+      decoder: { readers: ["code_128_reader"] },
+      locate: true
+    }, function(err) {
+      if (err) {
+        console.error(err);
+        alert("Camera error. Make sure permissions are allowed.");
+        return;
+      }
+      Quagga.start();
+      resultEl.textContent = "Scanning...";
+    });
+
+    Quagga.onDetected(function(data){
+      const code = data.codeResult.code;
+      resultEl.textContent = `Scanned: ${code}`;
+      flashResult();
+
+      if (!scannedHistory.includes(code)) {
+        scannedHistory.push(code);
+        const li = document.createElement('li');
+        li.textContent = code;
+        historyList.prepend(li);
+      }
+    });
+  }
+
+  function stopScanner() {
+    Quagga.stop();
+    resultEl.textContent = "Scanner stopped.";
+  }
+
+  startBtn.addEventListener('click', startScanner);
+  stopBtn.addEventListener('click', stopScanner);
+</script>
+
 </body>
 </html>
+
