@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Camera Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="text-align:center; font-family:Arial;">
+
+  <h2>Camera Test</h2>
+
+  <video id="video" autoplay playsinline
+         style="width:300px; border:2px solid black;"></video>
+
+  <p id="status">Waiting...</p>
+
+  <script>
+    const video = document.getElementById("video");
+    const status = document.getElementById("status");
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+        status.innerText = "✅ Camera is working";
+      })
+      .catch(err => {
+        status.innerText = "❌ Camera not working: " + err.message;
+      });
+  </script>
+
+</body>
+</html>
