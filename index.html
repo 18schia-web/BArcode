@@ -7,7 +7,7 @@
     body {
       margin: 0;
       font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #fbc2eb, #a6c1ee); /* fun gradient */
+      background: linear-gradient(135deg, #fbc2eb, #a6c1ee);
       color: #111;
       text-align: center;
     }
@@ -36,7 +36,7 @@
 
     .scanner-box, .history-box {
       border-radius: 15px;
-      padding: 20px;
+      padding: 15px;
       background-color: rgba(255,255,255,0.9);
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
@@ -44,6 +44,9 @@
     .scanner-box {
       flex: 1 1 320px;
       max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .history-box {
@@ -53,10 +56,11 @@
       overflow-y: auto;
     }
 
-    video {
+    #scanner {
       width: 100%;
       border-radius: 10px;
       border: 4px solid #ff6f61;
+      display: block;
       background-color: #000;
     }
 
@@ -119,10 +123,12 @@
   <div class="container">
     <!-- Scanner Column -->
     <div class="scanner-box">
-      <video id="scanner"></video>
+      <video id="scanner" autoplay playsinline></video>
       <div id="result">Scanned data will appear here</div>
-      <button id="start">Start Scanner</button>
-      <button id="stop">Stop Scanner</button>
+      <div>
+        <button id="start">Start Scanner</button>
+        <button id="stop">Stop Scanner</button>
+      </div>
     </div>
 
     <!-- History Column -->
@@ -146,17 +152,15 @@
       Quagga.init({
         inputStream: {
           type: "LiveStream",
-          target: document.querySelector('#scanner'),
-          constraints: { facingMode: "environment" }
+          constraints: { facingMode: "environment" },
+          target: document.querySelector('#scanner'), // attach camera to this video
         },
-        decoder: {
-          readers: ["code_128_reader"]
-        },
+        decoder: { readers: ["code_128_reader"] },
         locate: true
       }, function(err) {
         if (err) {
           console.error(err);
-          alert("Error accessing camera. Make sure camera permissions are allowed.");
+          alert("Camera error. Make sure permissions are allowed.");
           return;
         }
         Quagga.start();
@@ -167,15 +171,12 @@
         const code = data.codeResult.code;
         resultContainer.textContent = `Scanned: ${code}`;
 
-        // Add to history if new
         if (!scannedHistory.includes(code)) {
           scannedHistory.push(code);
           const li = document.createElement('li');
           li.textContent = code;
-          historyList.prepend(li); // newest on top
+          historyList.prepend(li);
         }
-
-        console.log("Scanned:", code);
       });
     }
 
