@@ -2,67 +2,93 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Barcode Scanner</title>
+  <title>My Barcode Scanner</title>
   <style>
     body {
-      background-color: #111;
+      background-color: #1a1a1a;
       color: #fff;
-      font-family: Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
       text-align: center;
+      margin: 0;
       padding: 20px;
     }
 
     h1 {
-      margin-bottom: 10px;
+      margin-bottom: 5px;
+      font-size: 2em;
+      color: #0f0;
+    }
+
+    p.description {
+      margin-top: 0;
+      font-size: 1.1em;
+      color: #ccc;
     }
 
     #scanner-container {
       display: inline-block;
-      margin-top: 20px;
-      border: 4px solid #fff;
-      padding: 5px;
-      background-color: #000; /* video will show over this */
+      margin-top: 30px;
+      border: 4px solid #0f0;
+      border-radius: 10px;
+      overflow: hidden;
+      background-color: #000;
     }
 
     video {
       display: block;
-      width: 300px;
-      height: 200px;
-      background-color: transparent; /* make sure camera feed shows */
+      width: 100%;
+      max-width: 400px;
+      height: auto;
+      background-color: transparent;
     }
 
-    #result {
-      margin-top: 15px;
-      font-size: 20px;
+    #result-container {
+      margin-top: 30px;
+      padding: 15px;
+      border: 2px solid #0f0;
+      border-radius: 10px;
+      display: inline-block;
+      min-width: 300px;
+      background-color: #111;
+      font-size: 1.2em;
       color: #0f0;
+      word-break: break-word;
     }
 
     button {
-      margin-top: 15px;
-      padding: 10px 20px;
-      font-size: 16px;
+      margin-top: 20px;
+      padding: 12px 25px;
+      font-size: 1em;
       cursor: pointer;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
+      margin-right: 10px;
       background-color: #0f0;
       color: #000;
+      transition: background-color 0.2s ease;
     }
 
     button:hover {
       background-color: #0c0;
     }
+
+    @media (max-width: 500px) {
+      video, #result-container {
+        width: 90%;
+      }
+    }
   </style>
 </head>
 <body>
 
-  <h1>Barcode Scanner</h1>
-  <p>Point your camera at a barcode</p>
+  <h1>My Barcode Scanner</h1>
+  <p class="description">Point your camera at a barcode to scan it.</p>
 
   <div id="scanner-container">
     <video id="scanner"></video>
   </div>
 
-  <p id="result">Result will appear here</p>
+  <div id="result-container">Scanned data will appear here.</div>
 
   <div>
     <button id="start">Start Scanner</button>
@@ -74,17 +100,19 @@
   <script>
     const startBtn = document.getElementById('start');
     const stopBtn = document.getElementById('stop');
+    const resultContainer = document.getElementById('result-container');
 
     function startScanner() {
       Quagga.init({
         inputStream: {
           type: "LiveStream",
           target: document.querySelector('#scanner'),
-          constraints: { facingMode: "environment" } // rear camera
+          constraints: { facingMode: "environment" }
         },
         decoder: {
           readers: ["code_128_reader"] // only Code 128 for text
-        }
+        },
+        locate: true // improves detection
       }, function(err) {
         if (err) {
           console.error(err);
@@ -92,18 +120,24 @@
           return;
         }
         Quagga.start();
-        document.getElementById('result').textContent = "Scanning...";
+        resultContainer.textContent = "Scanning...";
       });
 
       Quagga.onDetected(function(data){
-        document.getElementById('result').textContent = "Scanned: " + data.codeResult.code;
-        console.log("Scanned: ", data.codeResult.code);
+        const code = data.codeResult.code;
+        resultContainer.textContent = `Scanned Data: ${code}`;
+        console.log("Scanned: ", code);
+
+        // Example: fetch the scanned data (you can replace this with your API)
+        // fetch(`https://example.com/api?data=${encodeURIComponent(code)}`)
+        //   .then(response => response.json())
+        //   .then(data => console.log(data));
       });
     }
 
     function stopScanner() {
       Quagga.stop();
-      document.getElementById('result').textContent = "Scanner stopped.";
+      resultContainer.textContent = "Scanner stopped.";
     }
 
     startBtn.addEventListener('click', startScanner);
@@ -112,3 +146,4 @@
 
 </body>
 </html>
+
