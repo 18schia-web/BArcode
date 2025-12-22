@@ -2,70 +2,82 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Barcode Scanner & Generator</title>
+  <title>Barcode Scanner</title>
   <style>
     body {
       text-align: center;
       font-family: Arial, sans-serif;
-      padding: 20px;
-      background-color: #111; /* dark background */
+      background-color: #111;
       color: #fff;
+      padding: 20px;
     }
     video {
       border: 2px solid #fff;
       margin-top: 20px;
     }
-    .barcode-container img {
-      margin-top: 20px;
+    #result {
+      font-size: 20px;
+      margin-top: 10px;
+      color: #0f0;
     }
-    a img {
-      vertical-align: middle;
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <h1>My Barcode Website</h1>
+<h1>Barcode Scanner</h1>
+<p>Point your camera at a barcode</p>
 
-  <!-- Barcode Generator -->
-  <div class="barcode-container">
-    <img alt="Barcode Generator TEC-IT"
-         src="https://barcode.tec-it.com/barcode.ashx?data=Seth+Chia%0A%0A&multiplebarcodes=true&translate-esc=on&showhrt=no"/>
-    <div style="padding-top:8px; font-size:15px;">
-      <a href="https://www.tec-it.com" title="Barcode Software by TEC-IT" target="_blank">
-        TEC-IT Barcode Generator<br/>
-        <img alt="TEC-IT Barcode Software" border="0"
-             src="http://www.tec-it.com/pics/banner/web/TEC-IT_Logo_75x75.gif">
-      </a>
-    </div>
-  </div>
+<video id="scanner" width="300" height="200"></video>
+<p id="result">Result will appear here</p>
+<button id="start">Start Scanner</button>
+<button id="stop">Stop Scanner</button>
 
-  <!-- Barcode Scanner -->
-  <h2>Scan Your Barcode</h2>
-  <video id="scanner" width="300" height="200"></video>
-  <p id="result">Result will appear here</p>
+<!-- QuaggaJS library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<script>
+  const startBtn = document.getElementById('start');
+  const stopBtn = document.getElementById('stop');
 
-  <!-- QuaggaJS library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-  <script>
+  function startScanner() {
     Quagga.init({
       inputStream: {
         type: "LiveStream",
         target: document.querySelector('#scanner'),
-        constraints: { facingMode: "environment" }
+        constraints: { facingMode: "environment" } // use rear camera
       },
-      decoder: { readers: ["code_128_reader"] }
-    }, function(err) {
-      if (err) {
-        console.error(err);
-        return;
+      decoder: {
+        readers: ["code_128_reader","ean_reader","ean_8_reader","upc_reader"] // common barcode types
       }
+    }, function(err) {
+      if (err) { console.error(err); return; }
       Quagga.start();
+      document.getElementById('result').textContent = "Scanning...";
     });
 
     Quagga.onDetected(function(data){
       document.getElementById('result').textContent = "Scanned: " + data.codeResult.code;
+      console.log("Scanned: ", data.codeResult.code);
     });
+  }
+
+  function stopScanner() {
+    Quagga.stop();
+    document.getElementById('result').textContent = "Scanner stopped.";
+  }
+
+  startBtn.addEventListener('click', startScanner);
+  stopBtn.addEventListener('click', stopScanner);
+</script>
+
+</body>
+</html>
+
   </script>
 
 </body>
