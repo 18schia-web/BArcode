@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Barcode Scanner</title>
 
-  <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
-  <!-- Quagga -->
   <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
 
   <style>
@@ -36,12 +33,11 @@
 
     h1 {
       text-align: center;
-      margin: 8px 0 16px;
+      margin-bottom: 14px;
       font-size: 22px;
       font-weight: 700;
     }
 
-    /* Scanner box */
     .scanner-box {
       position: relative;
       width: 100%;
@@ -62,12 +58,15 @@
       object-fit: cover;
     }
 
-    /* Scan frame */
+    /* ✅ WIDE SCAN RECTANGLE */
     .frame {
       position: absolute;
-      inset: 18%;
-      border: 3px solid #4ade80;
-      border-radius: 12px;
+      left: 8%;
+      right: 8%;
+      top: 42%;
+      height: 18%;
+      border: 3px solid #22c55e;
+      border-radius: 10px;
       pointer-events: none;
     }
 
@@ -75,23 +74,20 @@
       content: "";
       position: absolute;
       inset: -3px;
-      border-radius: 12px;
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.35);
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.4);
+      border-radius: 10px;
     }
 
-    /* Result */
     .result {
       margin-top: 14px;
       padding: 12px;
       border-radius: 10px;
-      background: #ecfdf5;
-      color: #065f46;
+      background: #f1f5f9;
       font-weight: 600;
       text-align: center;
       min-height: 44px;
     }
 
-    /* History */
     .history {
       margin-top: 16px;
     }
@@ -128,7 +124,7 @@
       <div class="frame"></div>
     </div>
 
-    <div id="result" class="result">Scan a barcode</div>
+    <div id="result" class="result">Align barcode inside the frame</div>
 
     <div class="history">
       <h2>Scanned History</h2>
@@ -141,28 +137,20 @@
     const historyEl = document.getElementById("history");
 
     let lastScanned = "";
-    let cooldown = false;
+    let lastTime = 0;
     const scannedHistory = [];
 
     Quagga.init({
       inputStream: {
         type: "LiveStream",
         target: document.querySelector("#scanner"),
-        constraints: {
-          facingMode: "environment"
-        }
+        constraints: { facingMode: "environment" }
       },
       decoder: {
-        readers: [
-          "code_128_reader",
-          "code_39_reader",
-          "ean_reader",
-          "ean_8_reader",
-          "upc_reader"
-        ]
+        readers: ["code_128_reader", "code_39_reader"]
       },
       locate: true
-    }, function (err) {
+    }, err => {
       if (err) {
         console.error(err);
         return;
@@ -170,21 +158,36 @@
       Quagga.start();
     });
 
-    Quagga.onDetected(function (data) {
+    Quagga.onDetected(data => {
+      const now = Date.now();
+
+      // ⏱️ Hard cooldown (2.5s)
+      if (now - lastTime < 2500) return;
+
+      // 📉 Confidence filter
+      if (data.codeResult.decodedCodes) {
+        const avgError =
+          data.codeResult.decodedCodes.reduce((s, c) => s + c.error, 0) /
+          data.codeResult.decodedCodes.length;
+
+        if (avgError > 0.25) return; // reject weak scans
+      }
+
       let raw = data.codeResult.code;
 
-      // 🔥 CLEAN + NORMALIZE (THIS FIXES SPACES)
+      // 🔥 Clean text
       raw = raw.normalize("NFKC");
       raw = raw.replace(/\s+/g, " ");
       raw = raw.replace(/[^A-Za-z ]/g, "");
       const code = raw.trim();
 
-      if (!code) return;
-      if (cooldown || code === lastScanned) return;
+      // ❌ Reject junk
+      if (code.length < 4) return;
+      if (!code.includes(" ")) return; // must look like a name
+      if (code === lastScanned) return;
 
       lastScanned = code;
-      cooldown = true;
-      setTimeout(() => cooldown = false, 1500);
+      lastTime = now;
 
       resultEl.textContent = code;
       resultEl.style.background = "#dcfce7";
