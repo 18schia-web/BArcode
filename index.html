@@ -118,26 +118,25 @@ function startScanner() {
   });
 
   Quagga.onDetected(function(data){
-    const code = data.codeResult.code;
+  const code = data.codeResult.code.trim(); // 🔥 IMPORTANT FIX
 
-    // Filter: only letters, no numbers/symbols
-    if(!validPattern.test(code)) return;
+  // Only letters + spaces
+  if (!validPattern.test(code)) return;
 
-    if(cooldown || code===lastScanned) return;
-    lastScanned = code;
-    cooldown = true;
-    setTimeout(()=>{ cooldown=false; }, 1500);
+  if (cooldown || code === lastScanned) return;
+  lastScanned = code;
+  cooldown = true;
+  setTimeout(() => cooldown = false, 1500);
 
-    resultEl.textContent = `Scanned: ${code}`;
-    flashResult();
+  resultEl.textContent = `Scanned: ${code}`;
 
-    if(!scannedHistory.includes(code)){
-      scannedHistory.push(code);
-      const li=document.createElement('li');
-      li.textContent=code;
-      historyEl.prepend(li);
-    }
-  });
+  if (!scannedHistory.includes(code)) {
+    scannedHistory.push(code);
+    const li = document.createElement('li');
+    li.textContent = code;
+    historyEl.prepend(li);
+  }
+});
 }
 
 function stopScanner(){ Quagga.stop(); resultEl.textContent="Scanner stopped."; }
