@@ -3,16 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Barcode Scanner</title>
+  <title>Barcode Scanner</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-      font-family: "Inter", sans-serif;
-    }
+    * { box-sizing: border-box; font-family: Inter, sans-serif; }
 
     body {
       margin: 0;
@@ -33,9 +30,16 @@
 
     h1 {
       text-align: center;
-      margin-bottom: 14px;
-      font-size: 22px;
-      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    a {
+      display: block;
+      text-align: center;
+      margin-bottom: 10px;
+      color: #2563eb;
+      font-weight: 600;
+      text-decoration: none;
     }
 
     .scanner-box {
@@ -47,18 +51,12 @@
       background: black;
     }
 
-    #scanner {
-      width: 100%;
-      height: 100%;
-    }
-
-    video {
+    #scanner, video {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
 
-    /* ✅ WIDE SCAN RECTANGLE */
     .frame {
       position: absolute;
       left: 8%;
@@ -67,7 +65,6 @@
       height: 18%;
       border: 3px solid #22c55e;
       border-radius: 10px;
-      pointer-events: none;
     }
 
     .frame::after {
@@ -75,131 +72,105 @@
       position: absolute;
       inset: -3px;
       box-shadow: 0 0 0 9999px rgba(0,0,0,0.4);
-      border-radius: 10px;
     }
 
     .result {
-      margin-top: 14px;
+      margin-top: 12px;
       padding: 12px;
       border-radius: 10px;
-      background: #f1f5f9;
-      font-weight: 600;
       text-align: center;
+      font-weight: 600;
       min-height: 44px;
     }
 
-    .history {
-      margin-top: 16px;
-    }
-
-    .history h2 {
-      font-size: 16px;
-      margin-bottom: 8px;
-    }
-
-    .history ul {
+    ul {
       list-style: none;
       padding: 0;
-      margin: 0;
-      max-height: 180px;
-      overflow-y: auto;
+      margin-top: 12px;
     }
 
-    .history li {
-      background: #f1f5f9;
-      padding: 10px 12px;
+    li {
+      padding: 10px;
       border-radius: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      color: white;
       font-size: 14px;
     }
+
+    .green { background: #22c55e; }
+    .red { background: #ef4444; }
   </style>
 </head>
 
 <body>
-  <div class="app">
-    <h1>Barcode Scanner</h1>
+<div class="app">
+  <h1>Barcode Scanner</h1>
+  <a href="attendance.html">View Attendance →</a>
 
-    <div class="scanner-box">
-      <div id="scanner"></div>
-      <div class="frame"></div>
-    </div>
-
-    <div id="result" class="result">Align barcode inside the frame</div>
-
-    <div class="history">
-      <h2>Scanned History</h2>
-      <ul id="history"></ul>
-    </div>
+  <div class="scanner-box">
+    <div id="scanner"></div>
+    <div class="frame"></div>
   </div>
 
-  <script>
-    const resultEl = document.getElementById("result");
-    const historyEl = document.getElementById("history");
+  <div id="result" class="result">Align barcode inside frame</div>
+  <ul id="history"></ul>
+</div>
 
-    let lastScanned = "";
-    let lastTime = 0;
-    const scannedHistory = [];
+<script>
+  const attendance = JSON.parse(localStorage.getItem("attendanceList")) || [];
+  const present = JSON.parse(localStorage.getItem("presentList")) || [];
 
-    Quagga.init({
-      inputStream: {
-        type: "LiveStream",
-        target: document.querySelector("#scanner"),
-        constraints: { facingMode: "environment" }
-      },
-      decoder: {
-        readers: ["code_128_reader", "code_39_reader"]
-      },
-      locate: true
-    }, err => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-      Quagga.start();
-    });
+  const resultEl = document.getElementById("result");
+  const historyEl = document.getElementById("history");
 
-    Quagga.onDetected(data => {
-      const now = Date.now();
+  let lastScan = "";
+  let lastTime = 0;
 
-      // ⏱️ Hard cooldown (2.5s)
-      if (now - lastTime < 2500) return;
+  Quagga.init({
+    inputStream: {
+      type: "LiveStream",
+      target: document.querySelector("#scanner"),
+      constraints: { facingMode: "environment" }
+    },
+    decoder: { readers: ["code_128_reader", "code_39_reader"] },
+    locate: true
+  }, err => {
+    if (!err) Quagga.start();
+  });
 
-      // 📉 Confidence filter
-      if (data.codeResult.decodedCodes) {
-        const avgError =
-          data.codeResult.decodedCodes.reduce((s, c) => s + c.error, 0) /
-          data.codeResult.decodedCodes.length;
+  Quagga.onDetected(data => {
+    const now = Date.now();
+    if (now - lastTime < 2500) return;
 
-        if (avgError > 0.25) return; // reject weak scans
-      }
+    let raw = data.codeResult.code;
+    raw = raw.normalize("NFKC").replace(/\s+/g, " ").replace(/[^A-Za-z ]/g, "");
+    const name = raw.trim();
 
-      let raw = data.codeResult.code;
+    if (name.length < 4 || !name.includes(" ") || name === lastScan) return;
 
-      // 🔥 Clean text
-      raw = raw.normalize("NFKC");
-      raw = raw.replace(/\s+/g, " ");
-      raw = raw.replace(/[^A-Za-z ]/g, "");
-      const code = raw.trim();
+    lastScan = name;
+    lastTime = now;
 
-      // ❌ Reject junk
-      if (code.length < 4) return;
-      if (!code.includes(" ")) return; // must look like a name
-      if (code === lastScanned) return;
+    const li = document.createElement("li");
 
-      lastScanned = code;
-      lastTime = now;
-
-      resultEl.textContent = code;
+    if (attendance.includes(name)) {
+      li.className = "green";
+      resultEl.textContent = `${name} ✓`;
       resultEl.style.background = "#dcfce7";
-      resultEl.style.color = "#166534";
 
-      if (!scannedHistory.includes(code)) {
-        scannedHistory.push(code);
-        const li = document.createElement("li");
-        li.textContent = code;
-        historyEl.prepend(li);
+      if (!present.includes(name)) {
+        present.push(name);
+        localStorage.setItem("presentList", JSON.stringify(present));
       }
-    });
-  </script>
+    } else {
+      li.className = "red";
+      resultEl.textContent = `${name} ✕`;
+      resultEl.style.background = "#fee2e2";
+    }
+
+    li.textContent = name;
+    historyEl.prepend(li);
+  });
+</script>
 </body>
 </html>
