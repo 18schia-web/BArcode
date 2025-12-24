@@ -30,6 +30,17 @@ a {
   font-weight: 600;
   text-decoration: none;
 }
+button {
+  display: block;
+  margin: 0 auto 16px auto;
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
 .section { margin-bottom: 24px; }
 .section h2 { font-size: 18px; margin-bottom: 8px; }
 ul { list-style: none; padding: 0; }
@@ -47,11 +58,12 @@ li {
 <div class="box">
   <h1>Attendance</h1>
   <a href="index.html">← Back to Scanner</a>
+  <button id="resetBtn">Reset Attendance</button>
   <div id="sections"></div>
 </div>
 
 <script>
-// Paste your list here
+// Attendance list (homerooms)
 const attendanceList = {
   "11 Browne": [
     "Idris Bee","My Anh Cao","Ashley Chan","Cheng Zhe Xin","Sean Chia","Mir Kim",
@@ -95,11 +107,11 @@ const attendanceList = {
   ]
 };
 
-localStorage.setItem("attendanceList", JSON.stringify(attendanceList));
 const present = JSON.parse(localStorage.getItem("presentList")) || [];
 
 const sectionsDiv = document.getElementById("sections");
 
+// Create sections per homeroom
 for (const homeroom in attendanceList) {
   const section = document.createElement("div");
   section.classList.add("section");
@@ -119,6 +131,15 @@ for (const homeroom in attendanceList) {
 
   sectionsDiv.appendChild(section);
 }
+
+// RESET BUTTON LOGIC
+const resetBtn = document.getElementById("resetBtn");
+resetBtn.addEventListener("click", () => {
+  if (confirm("Are you sure you want to reset all scanned attendance?")) {
+    localStorage.removeItem("presentList");
+    location.reload();
+  }
+});
 </script>
 </body>
 </html>
