@@ -1,150 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Prom Barcode Scanner</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-<style>
-  body, html {
-    margin:0; padding:0; height:100%;
-    font-family: 'Montserrat', sans-serif;
-    background:#fff; color:#111;
-    display:flex; flex-direction:column;
-    align-items:center; justify-content:flex-start;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Barcode Scanner</title>
 
-  #scanner-wrapper {
-    position:relative;
-    width:90%; max-width:500px;
-    aspect-ratio:4/3;
-    margin-top:20px;
-    border-radius:12px;
-    overflow:hidden;
-    background:#eee;
-    box-shadow:0 4px 12px rgba(0,0,0,0.1);
-  }
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-  #scanner-container {
-    width:100%; height:100%; background:#000; position:relative; overflow:hidden;
-  }
+  <!-- Quagga -->
+  <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
 
-  .overlay {
-    position:absolute;
-    top:50%; left:50%;
-    width:70%; height:25%;
-    transform:translate(-50%,-50%);
-    border:3px solid red;
-    box-sizing:border-box;
-    pointer-events:none;
-  }
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+    }
 
-  #result {
-    margin-top:10px;
-    font-size:1.2em;
-    font-weight:600;
-    color:#0f0;
-    text-align:center;
-  }
+    body {
+      margin: 0;
+      background: #f6f7fb;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+    }
 
-  #history {
-    margin-top:15px; max-height:200px; overflow-y:auto;
-    list-style:none; padding:0; width:90%; max-width:500px;
-  }
+    .app {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
 
-  #history li {
-    background:#f0f0f0; color:#111;
-    margin-bottom:6px; padding:8px 12px;
-    border-radius:6px; font-weight:600;
-    box-shadow:0 1px 3px rgba(0,0,0,0.1);
-  }
+    h1 {
+      text-align: center;
+      margin: 8px 0 16px;
+      font-size: 22px;
+      font-weight: 700;
+    }
 
-  button {
-    margin:10px 5px;
-    padding:10px 20px;
-    border:none; border-radius:6px; cursor:pointer;
-    font-weight:600; background:#555; color:#fff;
-  }
+    /* Scanner box */
+    .scanner-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      border-radius: 12px;
+      overflow: hidden;
+      background: black;
+    }
 
-  button:hover { background:#333; }
-</style>
+    #scanner {
+      width: 100%;
+      height: 100%;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Scan frame */
+    .frame {
+      position: absolute;
+      inset: 18%;
+      border: 3px solid #4ade80;
+      border-radius: 12px;
+      pointer-events: none;
+    }
+
+    .frame::after {
+      content: "";
+      position: absolute;
+      inset: -3px;
+      border-radius: 12px;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.35);
+    }
+
+    /* Result */
+    .result {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #ecfdf5;
+      color: #065f46;
+      font-weight: 600;
+      text-align: center;
+      min-height: 44px;
+    }
+
+    /* History */
+    .history {
+      margin-top: 16px;
+    }
+
+    .history h2 {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .history ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .history li {
+      background: #f1f5f9;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+  </style>
 </head>
+
 <body>
+  <div class="app">
+    <h1>Barcode Scanner</h1>
 
-<div id="scanner-wrapper">
-  <div id="scanner-container"></div>
-  <div class="overlay"></div>
-</div>
+    <div class="scanner-box">
+      <div id="scanner"></div>
+      <div class="frame"></div>
+    </div>
 
-<div id="result">Scanning...</div>
-<ul id="history"></ul>
-<div>
-  <button id="start">Start</button>
-  <button id="stop">Stop</button>
-</div>
+    <div id="result" class="result">Scan a barcode</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-<script>
-const resultEl = document.getElementById('result');
-const historyEl = document.getElementById('history');
-const startBtn = document.getElementById('start');
-const stopBtn = document.getElementById('stop');
+    <div class="history">
+      <h2>Scanned History</h2>
+      <ul id="history"></ul>
+    </div>
+  </div>
 
-let lastScanned = null;
-let scannedHistory = [];
-let cooldown = false;
+  <script>
+    const resultEl = document.getElementById("result");
+    const historyEl = document.getElementById("history");
 
-// Only letters (A-Z, a-z)
-const validPattern = /^[A-Za-z]+$/;
+    let lastScanned = "";
+    let cooldown = false;
+    const scannedHistory = [];
 
-function flashResult() {
-  resultEl.style.color = '#0f0';
-  setTimeout(()=>{ resultEl.style.color = '#0f0'; }, 300);
-}
+    Quagga.init({
+      inputStream: {
+        type: "LiveStream",
+        target: document.querySelector("#scanner"),
+        constraints: {
+          facingMode: "environment"
+        }
+      },
+      decoder: {
+        readers: [
+          "code_128_reader",
+          "code_39_reader",
+          "ean_reader",
+          "ean_8_reader",
+          "upc_reader"
+        ]
+      },
+      locate: true
+    }, function (err) {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      Quagga.start();
+    });
 
-function startScanner() {
-  Quagga.init({
-    inputStream: {
-      type: "LiveStream",
-      target: document.querySelector('#scanner-container'),
-      constraints: { facingMode:"environment" }
-    },
-    decoder: { readers:["code_128_reader"] },
-    locate:true
-  }, function(err){
-    if(err){ console.error(err); alert("Camera error"); return; }
-    Quagga.start();
-    resultEl.textContent = "Scanning...";
-  });
+    Quagga.onDetected(function (data) {
+      let raw = data.codeResult.code;
 
-  Quagga.onDetected(function(data){
-  const code = data.codeResult.code.trim(); // 🔥 IMPORTANT FIX
+      // 🔥 CLEAN + NORMALIZE (THIS FIXES SPACES)
+      raw = raw.normalize("NFKC");
+      raw = raw.replace(/\s+/g, " ");
+      raw = raw.replace(/[^A-Za-z ]/g, "");
+      const code = raw.trim();
 
-  // Only letters + spaces
-  if (!validPattern.test(code)) return;
+      if (!code) return;
+      if (cooldown || code === lastScanned) return;
 
-  if (cooldown || code === lastScanned) return;
-  lastScanned = code;
-  cooldown = true;
-  setTimeout(() => cooldown = false, 1500);
+      lastScanned = code;
+      cooldown = true;
+      setTimeout(() => cooldown = false, 1500);
 
-  resultEl.textContent = `Scanned: ${code}`;
+      resultEl.textContent = code;
+      resultEl.style.background = "#dcfce7";
+      resultEl.style.color = "#166534";
 
-  if (!scannedHistory.includes(code)) {
-    scannedHistory.push(code);
-    const li = document.createElement('li');
-    li.textContent = code;
-    historyEl.prepend(li);
-  }
-});
-}
-
-function stopScanner(){ Quagga.stop(); resultEl.textContent="Scanner stopped."; }
-
-startBtn.addEventListener('click', startScanner);
-stopBtn.addEventListener('click', stopScanner);
-</script>
-
+      if (!scannedHistory.includes(code)) {
+        scannedHistory.push(code);
+        const li = document.createElement("li");
+        li.textContent = code;
+        historyEl.prepend(li);
+      }
+    });
+  </script>
 </body>
 </html>
-
