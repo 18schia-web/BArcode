@@ -1,105 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Barcode Scanner</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Barcode Scanner</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
 
-  <style>
-    * { box-sizing: border-box; font-family: Inter, sans-serif; }
+<style>
+* { box-sizing: border-box; font-family: Inter, sans-serif; }
 
-    body {
-      margin: 0;
-      background: #f6f7fb;
-      display: flex;
-      justify-content: center;
-      padding: 16px;
-    }
+body {
+  margin: 0;
+  background: #f6f7fb;
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
 
-    .app {
-      width: 100%;
-      max-width: 420px;
-      background: white;
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
+.app {
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
 
-    h1 {
-      text-align: center;
-      margin-bottom: 8px;
-    }
+h1 {
+  text-align: center;
+  margin-bottom: 8px;
+}
 
-    a {
-      display: block;
-      text-align: center;
-      margin-bottom: 10px;
-      color: #2563eb;
-      font-weight: 600;
-      text-decoration: none;
-    }
+a {
+  display: block;
+  text-align: center;
+  margin-bottom: 10px;
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
 
-    .scanner-box {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 3 / 4;
-      border-radius: 12px;
-      overflow: hidden;
-      background: black;
-    }
+.scanner-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+  overflow: hidden;
+  background: black;
+}
 
-    #scanner, video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+#scanner, video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-    .frame {
-      position: absolute;
-      left: 8%;
-      right: 8%;
-      top: 42%;
-      height: 18%;
-      border: 3px solid #22c55e;
-      border-radius: 10px;
-    }
+.frame {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 42%;
+  height: 18%;
+  border: 3px solid #22c55e;
+  border-radius: 10px;
+}
 
-    .frame::after {
-      content: "";
-      position: absolute;
-      inset: -3px;
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.4);
-    }
+.frame::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.4);
+}
 
-    .result {
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 10px;
-      text-align: center;
-      font-weight: 600;
-      min-height: 44px;
-    }
+.result {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 600;
+  min-height: 44px;
+  background: #fff;
+}
 
-    ul {
-      list-style: none;
-      padding: 0;
-      margin-top: 12px;
-    }
+ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 12px;
+}
 
-    li {
-      padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 6px;
-      color: white;
-      font-size: 14px;
-    }
+li {
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  color: white;
+  font-size: 14px;
+}
 
-    .green { background: #22c55e; }
-    .red { background: #ef4444; }
-  </style>
+.green { background: #22c55e; }
+.red { background: #ef4444; }
+</style>
 </head>
 
 <body>
@@ -117,60 +118,60 @@
 </div>
 
 <script>
-  const attendance = JSON.parse(localStorage.getItem("attendanceList")) || [];
-  const present = JSON.parse(localStorage.getItem("presentList")) || [];
+const rawList = JSON.parse(localStorage.getItem("attendanceList")) || {};
+// Flatten all homerooms into one array
+const attendance = Object.values(rawList).flat();
+const present = JSON.parse(localStorage.getItem("presentList")) || [];
 
-  const resultEl = document.getElementById("result");
-  const historyEl = document.getElementById("history");
+const resultEl = document.getElementById("result");
+const historyEl = document.getElementById("history");
 
-  let lastScan = "";
-  let lastTime = 0;
+let lastScan = "";
+let lastTime = 0;
 
-  Quagga.init({
-    inputStream: {
-      type: "LiveStream",
-      target: document.querySelector("#scanner"),
-      constraints: { facingMode: "environment" }
-    },
-    decoder: { readers: ["code_128_reader", "code_39_reader"] },
-    locate: true
-  }, err => {
-    if (!err) Quagga.start();
-  });
+Quagga.init({
+  inputStream: {
+    type: "LiveStream",
+    target: document.querySelector("#scanner"),
+    constraints: { facingMode: "environment" }
+  },
+  decoder: { readers: ["code_128_reader", "code_39_reader"] },
+  locate: true
+}, err => { if (!err) Quagga.start(); });
 
-  Quagga.onDetected(data => {
-    const now = Date.now();
-    if (now - lastTime < 2500) return;
+Quagga.onDetected(data => {
+  const now = Date.now();
+  if (now - lastTime < 2500) return; // anti-spam
 
-    let raw = data.codeResult.code;
-    raw = raw.normalize("NFKC").replace(/\s+/g, " ").replace(/[^A-Za-z ]/g, "");
-    const name = raw.trim();
+  let raw = data.codeResult.code;
+  raw = raw.normalize("NFKC").replace(/\s+/g, " ").replace(/[^A-Za-z ]/g, "");
+  const name = raw.trim();
 
-    if (name.length < 4 || !name.includes(" ") || name === lastScan) return;
+  if (name.length < 4 || !name.includes(" ") || name === lastScan) return;
 
-    lastScan = name;
-    lastTime = now;
+  lastScan = name;
+  lastTime = now;
 
-    const li = document.createElement("li");
+  const li = document.createElement("li");
 
-    if (attendance.includes(name)) {
-      li.className = "green";
-      resultEl.textContent = `${name} ✓`;
-      resultEl.style.background = "#dcfce7";
+  if (attendance.includes(name)) {
+    li.className = "green";
+    resultEl.textContent = `${name} ✓`;
+    resultEl.style.background = "#dcfce7";
 
-      if (!present.includes(name)) {
-        present.push(name);
-        localStorage.setItem("presentList", JSON.stringify(present));
-      }
-    } else {
-      li.className = "red";
-      resultEl.textContent = `${name} ✕`;
-      resultEl.style.background = "#fee2e2";
+    if (!present.includes(name)) {
+      present.push(name);
+      localStorage.setItem("presentList", JSON.stringify(present));
     }
+  } else {
+    li.className = "red";
+    resultEl.textContent = `${name} ✕`;
+    resultEl.style.background = "#fee2e2";
+  }
 
-    li.textContent = name;
-    historyEl.prepend(li);
-  });
+  li.textContent = name;
+  historyEl.prepend(li);
+});
 </script>
 </body>
 </html>
