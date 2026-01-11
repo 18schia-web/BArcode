@@ -1,89 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Barcode Scanner</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; font-family: Inter, sans-serif; }
+
+    body {
+      margin: 0;
+      background: #f6f7fb;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    a {
+      display: block;
+      text-align: center;
+      margin-bottom: 10px;
+      color: #2563eb;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .scanner-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      border-radius: 12px;
+      overflow: hidden;
+      background: black;
+    }
+
+    #scanner, video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .frame {
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      top: 42%;
+      height: 18%;
+      border: 3px solid #22c55e;
+      border-radius: 10px;
+    }
+
+    .frame::after {
+      content: "";
+      position: absolute;
+      inset: -3px;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.4);
+    }
+
+    .result {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 600;
+      min-height: 44px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 12px;
+    }
+
+    li {
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      color: white;
+      font-size: 14px;
+    }
+
+    .green { background: #22c55e; }
+    .red { background: #ef4444; }
+  </style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Barcode Scanner</title>
+<title>Scanner</title>
 
-<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
 
 <style>
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f2f2f2;
+  background: #f3f4f6;
+  display: flex;
+  justify-content: center;
+  padding: 16px;
 }
 
-.wrapper {
+.app {
+  width: 100%;
   max-width: 420px;
-  margin: auto;
-  padding: 12px;
+  background: white;
+  border-radius: 14px;
+  padding: 16px;
 }
 
-h1 {
+h1 { text-align: center; }
+
+a {
+  display: block;
   text-align: center;
   margin-bottom: 10px;
 }
 
-#reader {
-  width: 100%;
-  height: 260px;
+.scanner-box {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  background: black;
   border-radius: 12px;
   overflow: hidden;
-  background: black;
 }
 
-#result {
+#scanner, video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.frame {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 45%;
+  height: 15%;
+  border: 3px solid #22c55e;
+  border-radius: 10px;
+}
+
+.result {
   margin-top: 12px;
-  padding: 10px;
-  text-align: center;
+  padding: 12px;
+  border-radius: 10px;
   font-weight: bold;
-  border-radius: 8px;
+  text-align: center;
 }
 
-.valid { background: #22c55e; color: white; }
-.invalid { background: #ef4444; color: white; }
-
-#history {
-  margin-top: 12px;
-}
-
-.entry {
-  padding: 6px 8px;
+ul { list-style: none; padding: 0; }
+li {
+  padding: 8px;
   border-radius: 6px;
-  margin-bottom: 4px;
-  font-size: 14px;
+  margin-top: 6px;
+  color: white;
 }
 
-.green { background: #dcfce7; color: #166534; }
-.red { background: #fee2e2; color: #991b1b; }
-
-a {
-  display: block;
-  margin-top: 10px;
-  text-align: center;
-  text-decoration: none;
-  font-weight: bold;
-  color: #2563eb;
-}
+.green { background: #22c55e; }
+.red { background: #ef4444; }
 </style>
 </head>
 
 <body>
-<div class="wrapper">
+<div class="app">
   <h1>Barcode Scanner</h1>
-
-  <div id="reader"></div>
-
-  <div id="result">Scan a barcode</div>
-
-  <div id="history"></div>
-
+  <a href="attendance.html">View Attendance →</a>
+  <h1>Scanner</h1>
   <a href="attendance.html">View Attendance</a>
+
+  <div class="scanner-box">
+    <div id="scanner"></div>
+    <div class="frame"></div>
+  </div>
+
+  <div id="result" class="result">Align barcode inside frame</div>
+  <div id="result" class="result">Scan ticket</div>
+  <ul id="history"></ul>
 </div>
 
 <script>
-// ===== MASTER ATTENDANCE LIST (HARDCODED) =====
+  const attendance = JSON.parse(localStorage.getItem("attendanceList")) || [];
+  const present = JSON.parse(localStorage.getItem("presentList")) || [];
+
+  const resultEl = document.getElementById("result");
+  const historyEl = document.getElementById("history");
+
+  let lastScan = "";
+  let lastTime = 0;
+
+  Quagga.init({
+    inputStream: {
+      type: "LiveStream",
+      target: document.querySelector("#scanner"),
+      constraints: { facingMode: "environment" }
+    },
+    decoder: { readers: ["code_128_reader", "code_39_reader"] },
+    locate: true
+  }, err => {
+    if (!err) Quagga.start();
+  });
+
+  Quagga.onDetected(data => {
+    const now = Date.now();
+    if (now - lastTime < 2500) return;
+
+    let raw = data.codeResult.code;
+    raw = raw.normalize("NFKC").replace(/\s+/g, " ").replace(/[^A-Za-z ]/g, "");
+    const name = raw.trim();
+
+    if (name.length < 4 || !name.includes(" ") || name === lastScan) return;
+
+    lastScan = name;
+    lastTime = now;
+
+    const li = document.createElement("li");
+
+    if (attendance.includes(name)) {
+      li.className = "green";
+      resultEl.textContent = `${name} ✓`;
+      resultEl.style.background = "#dcfce7";
+
+      if (!present.includes(name)) {
+        present.push(name);
+        localStorage.setItem("presentList", JSON.stringify(present));
+      }
+    } else {
+      li.className = "red";
+      resultEl.textContent = `${name} ✕`;
+      resultEl.style.background = "#fee2e2";
+/* ---------- NORMALISE FUNCTION (CRITICAL) ---------- */
+function normalizeName(str) {
+  return str
+    .normalize("NFKC")
+    .replace(/[^A-Za-z ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+/* ---------- LOAD LIST ---------- */
 const attendanceList = {
   "11 Browne": [
     "Idris Bee","My Anh Cao","Ashley Chan","Cheng Zhe Xin","Sean Chia","Mir Kim",
@@ -126,64 +298,64 @@ const attendanceList = {
     "Varshnee T","Wong Shan Li","Gabriel Wong","Jihyun Yoon"
   ]
 };
-
-// Flatten
 const validNames = new Set(Object.values(attendanceList).flat());
+const validNames = new Set(
+  Object.values(rawList).flat().map(normalizeName)
+);
 
-// Present list (local only)
-const present = JSON.parse(localStorage.getItem("presentList")) || [];
+let present = JSON.parse(localStorage.getItem("presentList")) || [];
 
-// Anti-spam
-let lastText = "";
+const resultEl = document.getElementById("result");
+const historyEl = document.getElementById("history");
+
+let lastScan = "";
 let lastTime = 0;
 
-const resultBox = document.getElementById("result");
-const historyDiv = document.getElementById("history");
+Quagga.init({
+  inputStream: {
+    type: "LiveStream",
+    target: document.querySelector("#scanner"),
+    constraints: { facingMode: "environment" }
+  },
+  decoder: { readers: ["code_128_reader", "code_39_reader"] }
+}, err => {
+  if (!err) Quagga.start();
+});
 
-function addHistory(text, ok) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  div.className = "entry " + (ok ? "green" : "red");
-  historyDiv.prepend(div);
-}
+Quagga.onDetected(data => {
+  const now = Date.now();
+  if (now - lastTime < 2500) return;
 
-const scanner = new Html5Qrcode("reader");
+  let scanned = normalizeName(data.codeResult.code);
+  if (!scanned || scanned === lastScan) return;
 
-scanner.start(
-  { facingMode: "environment" },
-  { fps: 10, qrbox: { width: 260, height: 120 } },
-  (text) => {
-    const now = Date.now();
-    if (text === lastText && now - lastTime < 2000) return;
+  lastScan = scanned;
+  lastTime = now;
 
-    lastText = text;
-    lastTime = now;
+  const li = document.createElement("li");
 
-    const cleaned = text.trim();
+  if (validNames.has(scanned)) {
+    li.className = "green";
+    resultEl.textContent = `${scanned} ✓`;
+    resultEl.style.background = "#dcfce7";
 
-    // Letters + spaces only
-    if (!/^[A-Za-z ]+$/.test(cleaned)) {
-      resultBox.textContent = "Invalid barcode";
-      resultBox.className = "invalid";
-      addHistory(cleaned, false);
-      return;
+    if (!present.includes(scanned)) {
+      present.push(scanned);
+      localStorage.setItem("presentList", JSON.stringify(present));
     }
 
-    if (validNames.has(cleaned)) {
-      if (!present.includes(cleaned)) {
-        present.push(cleaned);
-        localStorage.setItem("presentList", JSON.stringify(present));
-      }
-      resultBox.textContent = `✔ ${cleaned}`;
-      resultBox.className = "valid";
-      addHistory(cleaned, true);
-    } else {
-      resultBox.textContent = `✖ ${cleaned}`;
-      resultBox.className = "invalid";
-      addHistory(cleaned, false);
-    }
+    li.textContent = name;
+    historyEl.prepend(li);
+  });
+  } else {
+    li.className = "red";
+    resultEl.textContent = `${scanned} ✕`;
+    resultEl.style.background = "#fee2e2";
   }
-);
+
+  li.textContent = scanned;
+  historyEl.prepend(li);
+});
 </script>
 </body>
 </html>
