@@ -121,12 +121,57 @@ for (const homeroom in attendanceList) {
   section.appendChild(h2);
 
   const ul = document.createElement("ul");
-  attendanceList[homeroom].forEach(name => {
-    const li = document.createElement("li");
-    li.textContent = name;
-    if (present.includes(name)) li.classList.add("present");
-    ul.appendChild(li);
+ attendanceList[homeroom].forEach(name => {
+
+  const li = document.createElement("li");
+
+  li.style.display = "flex";
+  li.style.alignItems = "center";
+  li.style.gap = "10px";
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+
+  if (present.includes(name)) {
+    checkbox.checked = true;
+    li.classList.add("present");
+  }
+
+  checkbox.addEventListener("change", () => {
+
+    let current =
+      JSON.parse(localStorage.getItem("presentList")) || [];
+
+    if (checkbox.checked) {
+
+      if (!current.includes(name))
+        current.push(name);
+
+      li.classList.add("present");
+
+    } else {
+
+      current = current.filter(
+        student => student !== name
+      );
+
+      li.classList.remove("present");
+    }
+
+    localStorage.setItem(
+      "presentList",
+      JSON.stringify(current)
+    );
   });
+
+  const span = document.createElement("span");
+  span.textContent = name;
+
+  li.appendChild(checkbox);
+  li.appendChild(span);
+
+  ul.appendChild(li);
+});
   section.appendChild(ul);
 
   sectionsDiv.appendChild(section);
