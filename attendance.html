@@ -107,76 +107,63 @@ const attendanceList = {
   ]
 };
 
-const present = JSON.parse(localStorage.getItem("presentList")) || [];
+const API_URL =
+"https://script.google.com/macros/s/AKfycbxBXhc0hASt9EW5KvSSOimMJ14MNQB8Bg8YkmqBCHhJ_iP7q-3b0uTTdTOBzY2c5RVJlA/exec";
 
 const sectionsDiv = document.getElementById("sections");
 
 // Create sections per homeroom
-for (const homeroom in attendanceList) {
-  const section = document.createElement("div");
-  section.classList.add("section");
+fetch(API_URL)
+.then(res => res.json())
+.then(data => {
 
-  const h2 = document.createElement("h2");
-  h2.textContent = homeroom;
-  section.appendChild(h2);
+  const presentSet = new Set(
+    data
+      .filter(student => student.present)
+      .map(student => student.name)
+  );
 
-  const ul = document.createElement("ul");
- attendanceList[homeroom].forEach(name => {
+  for (const homeroom in attendanceList) {
 
-  const li = document.createElement("li");
+    const section = document.createElement("div");
+    section.classList.add("section");
 
-  li.style.display = "flex";
-  li.style.alignItems = "center";
-  li.style.gap = "10px";
+    const h2 = document.createElement("h2");
+    h2.textContent = homeroom;
+    section.appendChild(h2);
 
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
+    const ul = document.createElement("ul");
 
-  if (present.includes(name)) {
-    checkbox.checked = true;
-    li.classList.add("present");
+    attendanceList[homeroom].forEach(name => {
+
+      const li = document.createElement("li");
+
+      li.style.display = "flex";
+      li.style.alignItems = "center";
+      li.style.gap = "10px";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+
+      if (presentSet.has(name)) {
+        checkbox.checked = true;
+        li.classList.add("present");
+      }
+
+      const span = document.createElement("span");
+      span.textContent = name;
+
+      li.appendChild(checkbox);
+      li.appendChild(span);
+
+      ul.appendChild(li);
+    });
+
+    section.appendChild(ul);
+    sectionsDiv.appendChild(section);
   }
 
-  checkbox.addEventListener("change", () => {
-
-    let current =
-      JSON.parse(localStorage.getItem("presentList")) || [];
-
-    if (checkbox.checked) {
-
-      if (!current.includes(name))
-        current.push(name);
-
-      li.classList.add("present");
-
-    } else {
-
-      current = current.filter(
-        student => student !== name
-      );
-
-      li.classList.remove("present");
-    }
-
-    localStorage.setItem(
-      "presentList",
-      JSON.stringify(current)
-    );
-  });
-
-  const span = document.createElement("span");
-  span.textContent = name;
-
-  li.appendChild(checkbox);
-  li.appendChild(span);
-
-  ul.appendChild(li);
 });
-  section.appendChild(ul);
-
-  sectionsDiv.appendChild(section);
-}
-
 // RESET BUTTON LOGIC
 const resetBtn = document.getElementById("resetBtn");
 resetBtn.addEventListener("click", () => {
