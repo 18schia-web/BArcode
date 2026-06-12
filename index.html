@@ -176,7 +176,8 @@ const attendanceList = {
 };
 
 const validNames = new Set(Object.values(attendanceList).flat());
-const present = JSON.parse(localStorage.getItem("presentList")) || [];
+const API_URL =
+"https://script.google.com/macros/s/AKfycbxBXhc0hASt9EW5KvSSOimMJ14MNQB8Bg8YkmqBCHhJ_iP7q-3b0uTTdTOBzY2c5RVJlA/exec";
 
 const resultEl = document.getElementById("result");
 const historyEl = document.getElementById("history");
@@ -207,13 +208,13 @@ function processScan(rawValue) {
 
     checkbox.checked = true;
 
-    if (!present.includes(name)) {
-      present.push(name);
-      localStorage.setItem(
-        "presentList",
-        JSON.stringify(present)
-      );
-    }
+fetch(API_URL, {
+  method: "POST",
+  body: JSON.stringify({
+    name: name
+  })
+})
+.catch(err => console.error(err));
 
   } else {
 
