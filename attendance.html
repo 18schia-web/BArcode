@@ -149,7 +149,23 @@ fetch(API_URL)
         checkbox.checked = true;
         li.classList.add("present");
       }
+checkbox.addEventListener("change", () => {
 
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      name: name,
+      present: checkbox.checked
+    })
+  });
+
+  if (checkbox.checked) {
+    li.classList.add("present");
+  } else {
+    li.classList.remove("present");
+  }
+
+});
       const span = document.createElement("span");
       span.textContent = name;
 
@@ -164,14 +180,7 @@ fetch(API_URL)
   }
 
 });
-// RESET BUTTON LOGIC
-const resetBtn = document.getElementById("resetBtn");
-resetBtn.addEventListener("click", () => {
-  if (confirm("Are you sure you want to reset all scanned attendance?")) {
-    localStorage.removeItem("presentList");
-    location.reload();
-  }
-});
+
 </script>
 </body>
 </html>
