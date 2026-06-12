@@ -103,7 +103,20 @@ li {
     <div id="scanner"></div>
     <div class="frame"></div>
   </div>
-
+<input
+  type="text"
+  id="barcodeInput"
+  placeholder="Scan with USB barcode scanner here."
+  autofocus
+  style="
+    width:100%;
+    margin-top:12px;
+    margin-bottom:12px;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #ccc;
+  "
+>
   <div id="result" class="result">Align barcode inside frame</div>
   <ul id="history"></ul>
 </div>
@@ -172,45 +185,81 @@ let lastScan = "";
 let lastTime = 0;
 
 // ---------- QUAGGA ----------
-Quagga.init({
-  inputStream: {
-    type: "LiveStream",
-    target: document.querySelector("#scanner"),
-    constraints: { facingMode: "environment" }
-  },
-  decoder: { readers: ["code_128_reader", "code_39_reader"] },
-  locate: true
-}, err => {
-  if (!err) Quagga.start();
-});
+function processScan(rawValue) {
 
-Quagga.onDetected(data => {
-  const now = Date.now();
-  if (now - lastTime < 2500) return;
+  const name = normalizeName(rawValue);
 
-  const name = normalizeName(data.codeResult.code);
-  if (!name || name === lastScan) return;
-
-  lastScan = name;
-  lastTime = now;
+  if (!name) return;
 
   const li = document.createElement("li");
 
+  li.style.display = "flex";
+  li.style.alignItems = "center";
+  li.style.gap = "10px";
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+
   if (validNames.has(name)) {
+
     li.className = "green";
     resultEl.textContent = `${name} ✓`;
 
+    checkbox.checked = true;
+
     if (!present.includes(name)) {
       present.push(name);
-      localStorage.setItem("presentList", JSON.stringify(present));
+      localStorage.setItem(
+        "presentList",
+        JSON.stringify(present)
+      );
     }
+
   } else {
+
     li.className = "red";
     resultEl.textContent = `${name} ✕`;
   }
 
-  li.textContent = name;
+  const text = document.createElement("span");
+  text.textContent = name;
+
+  li.appendChild(checkbox);
+  li.appendChild(text);
+
   historyEl.prepend(li);
+}
+
+Quagga.onDetected(data => {
+
+  const now = Date.now();
+
+  if (now - lastTime < 2500) return;
+
+  const code = data.codeResult.code;
+
+  if (code === lastScan) return;
+
+  lastScan = code;
+  lastTime = now;
+
+  processScan(code);
+});
+
+const barcodeInput =
+  document.getElementById("barcodeInput");
+
+barcodeInput.addEventListener("keydown", e => {
+
+  if (e.key === "Enter") {
+
+    processScan(barcodeInput.value);
+
+    barcodeInput.value = "";
+
+    barcodeInput.focus();
+  }
+
 });
 </script>
 </body>
